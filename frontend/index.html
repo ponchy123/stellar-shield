@@ -3,177 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StellarShield - 隐私转账</title>
+    <title>StellarShield - Zero-Knowledge Privacy</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0f2847 100%);
             min-height: 100vh;
-            color: #fff;
+            color: #e0e0e0;
         }
-        .container { max-width: 480px; margin: 0 auto; padding: 20px; }
-        .header {
-            text-align: center;
-            padding: 40px 0 30px;
-        }
+        .container { max-width: 520px; margin: 0 auto; padding: 16px; }
+        .header { text-align: center; padding: 30px 0 20px; }
         .header h1 {
-            font-size: 32px;
-            background: linear-gradient(135deg, #00d9ff, #00ff88);
+            font-size: 36px;
+            background: linear-gradient(135deg, #00d4ff, #00ff9d);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 8px;
+            letter-spacing: 2px;
         }
-        .header p { color: #8892b0; font-size: 14px; }
+        .header p { color: #7a8ba8; font-size: 13px; margin-top: 6px; }
+        .badge {
+            display: inline-block;
+            background: rgba(0,212,255,0.1);
+            border: 1px solid rgba(0,212,255,0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            color: #00d4ff;
+            margin-top: 10px;
+        }
         .card {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.08);
             border-radius: 16px;
-            padding: 24px;
-            margin-bottom: 16px;
-            backdrop-filter: blur(10px);
+            padding: 20px;
+            margin-bottom: 12px;
         }
-        .wallet-section {
-            text-align: center;
-            padding: 20px 0;
-        }
+        .wallet-section { text-align: center; padding: 12px 0; }
         .wallet-btn {
-            background: linear-gradient(135deg, #00d9ff, #00ff88);
-            color: #1a1a2e;
+            background: linear-gradient(135deg, #00d4ff, #00ff9d);
+            color: #0a0a1a;
             border: none;
-            padding: 14px 32px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 700;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s;
         }
-        .wallet-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,217,255,0.3);
+        .wallet-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,212,255,0.3); }
+        .wallet-btn:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; box-shadow: none; }
+        .wallet-info { margin-top: 10px; font-size: 12px; color: #5a6a8a; }
+        .network-badge {
+            display: inline-block;
+            background: rgba(0,255,157,0.1);
+            border: 1px solid rgba(0,255,157,0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            color: #00ff9d;
         }
-        .wallet-btn:disabled {
-            background: #444;
-            color: #888;
-            cursor: not-allowed;
-        }
-        .wallet-address {
-            margin-top: 12px;
-            font-size: 13px;
-            color: #8892b0;
-            word-break: break-all;
-        }
-        .tab-container {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
+        .tabs { display: flex; gap: 6px; margin-bottom: 16px; }
         .tab {
             flex: 1;
-            padding: 12px;
+            padding: 10px;
             text-align: center;
             cursor: pointer;
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 8px;
             background: transparent;
-            color: #8892b0;
-            font-size: 14px;
-            font-weight: 500;
+            color: #5a6a8a;
+            font-size: 13px;
+            font-weight: 600;
             transition: all 0.2s;
         }
-        .tab.active {
-            background: rgba(0,217,255,0.1);
-            border-color: #00d9ff;
-            color: #00d9ff;
-        }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            color: #ccd6f6;
-            font-size: 14px;
-        }
-        .form-group input {
+        .tab.active { background: rgba(0,212,255,0.08); border-color: #00d4ff; color: #00d4ff; }
+        .tab:hover:not(.active) { border-color: rgba(255,255,255,0.2); color: #8892b0; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .field { margin-bottom: 14px; }
+        .field label { display: block; margin-bottom: 6px; color: #8892b0; font-size: 13px; font-weight: 500; }
+        .field input {
             width: 100%;
-            padding: 14px 16px;
+            padding: 12px 14px;
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.03);
             color: #fff;
-            font-size: 16px;
+            font-size: 14px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
             outline: none;
             transition: border-color 0.2s;
         }
-        .form-group input:focus { border-color: #00d9ff; }
-        .form-group input::placeholder { color: #5a6a8a; }
-        .submit-btn {
+        .field input:focus { border-color: #00d4ff; }
+        .field input::placeholder { color: #3a4a6a; }
+        .field .hint { font-size: 11px; color: #4a5a7a; margin-top: 4px; }
+        .action-btn {
             width: 100%;
-            background: linear-gradient(135deg, #00d9ff, #00ff88);
-            color: #1a1a2e;
+            background: linear-gradient(135deg, #00d4ff, #00ff9d);
+            color: #0a0a1a;
             border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,217,255,0.3);
-        }
-        .submit-btn:disabled {
-            background: #444;
-            color: #888;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        .status {
-            margin-top: 16px;
-            padding: 14px 16px;
+            padding: 14px;
             border-radius: 10px;
-            font-size: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .action-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,212,255,0.3); }
+        .action-btn:disabled { background: #2a2a3a; color: #555; cursor: not-allowed; transform: none; box-shadow: none; }
+        .action-btn .spinner {
             display: none;
-        }
-        .status.success { background: rgba(0,255,136,0.1); border: 1px solid #00ff88; color: #00ff88; }
-        .status.error { background: rgba(255,71,87,0.1); border: 1px solid #ff4757; color: #ff4757; }
-        .status.loading { background: rgba(0,217,255,0.1); border: 1px solid #00d9ff; color: #00d9ff; }
-        .features { padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
-        .features h3 { color: #ccd6f6; font-size: 16px; margin-bottom: 12px; }
-        .feature-item {
-            display: flex;
-            align-items: center;
-            padding: 8px 0;
-            color: #8892b0;
-            font-size: 14px;
-        }
-        .feature-item::before {
-            content: "✓";
-            color: #00ff88;
-            margin-right: 10px;
-            font-weight: bold;
-        }
-        .spinner {
-            display: inline-block;
             width: 16px;
             height: 16px;
             border: 2px solid transparent;
-            border-top-color: currentColor;
+            border-top-color: #0a0a1a;
             border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+            animation: spin 0.6s linear infinite;
             margin-right: 8px;
             vertical-align: middle;
         }
+        .action-btn.loading .spinner { display: inline-block; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .tx-link {
-            color: #00d9ff;
-            text-decoration: none;
-            word-break: break-all;
+        .result {
+            margin-top: 12px;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+            line-height: 1.5;
         }
-        .tx-link:hover { text-decoration: underline; }
+        .result.success { background: rgba(0,255,157,0.08); border: 1px solid rgba(0,255,157,0.3); color: #00ff9d; }
+        .result.error { background: rgba(255,71,87,0.08); border: 1px solid rgba(255,71,87,0.3); color: #ff4757; }
+        .result.loading { background: rgba(0,212,255,0.08); border: 1px solid rgba(0,212,255,0.3); color: #00d4ff; }
+        .result a { color: #00d4ff; text-decoration: none; }
+        .result a:hover { text-decoration: underline; }
+        .features { padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .features h3 { color: #8892b0; font-size: 14px; margin-bottom: 10px; font-weight: 600; }
+        .feat { display: flex; align-items: center; padding: 6px 0; color: #5a6a8a; font-size: 13px; }
+        .feat::before { content: "⬡"; color: #00d4ff; margin-right: 10px; font-size: 10px; }
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+        .stat {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+        }
+        .stat .val { font-size: 18px; font-weight: 700; color: #00d4ff; }
+        .stat .lbl { font-size: 10px; color: #5a6a8a; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -181,82 +161,99 @@
         <div class="header">
             <h1>StellarShield</h1>
             <p>Zero-Knowledge Privacy on Stellar</p>
+            <span class="badge">🔐 Groth16 Proofs</span>
         </div>
 
         <div class="card wallet-section">
             <button id="connect-wallet" class="wallet-btn">Connect Freighter</button>
-            <div id="wallet-address" class="wallet-address"></div>
+            <div id="wallet-info" class="wallet-info">
+                <span class="network-badge">Testnet</span>
+            </div>
         </div>
 
         <div class="card">
-            <div class="tab-container">
+            <div class="tabs">
                 <button class="tab active" data-tab="deposit">Deposit</button>
                 <button class="tab" data-tab="transfer">Transfer</button>
                 <button class="tab" data-tab="withdraw">Withdraw</button>
             </div>
 
-            <div id="deposit" class="tab-content active">
-                <div class="form-group">
-                    <label>Amount (units)</label>
-                    <input type="number" id="deposit-amount" placeholder="e.g. 1000000000" min="1">
+            <div id="deposit" class="panel active">
+                <div class="field">
+                    <label>Amount (stroops)</label>
+                    <input type="number" id="dep-amount" placeholder="1000000000" min="1">
+                    <div class="hint">1 XLM = 10,000,000 stroops</div>
                 </div>
-                <div class="form-group">
-                    <label>Secret (hex, 64 chars)</label>
-                    <input type="text" id="deposit-secret" placeholder="Auto-generated if empty" maxlength="64">
+                <div class="field">
+                    <label>Secret (leave empty to auto-generate)</label>
+                    <input type="text" id="dep-secret" placeholder="Auto-generated" maxlength="64">
                 </div>
-                <button id="deposit-btn" class="submit-btn" disabled>Deposit</button>
-                <div id="deposit-status" class="status"></div>
+                <button id="dep-btn" class="action-btn" disabled>
+                    <span class="spinner"></span>Generate Proof & Deposit
+                </button>
+                <div id="dep-result" class="result"></div>
             </div>
 
-            <div id="transfer" class="tab-content">
-                <div class="form-group">
+            <div id="transfer" class="panel">
+                <div class="field">
                     <label>Commitment Index to Spend</label>
-                    <input type="number" id="transfer-index" placeholder="e.g. 0" min="0">
+                    <input type="number" id="tx-index" placeholder="0" min="0">
                 </div>
-                <div class="form-group">
-                    <label>Secret (hex)</label>
-                    <input type="text" id="transfer-secret" placeholder="Your secret" maxlength="64">
+                <div class="field">
+                    <label>Your Secret (hex)</label>
+                    <input type="text" id="tx-secret" placeholder="64 hex chars" maxlength="64">
                 </div>
-                <div class="form-group">
-                    <label>New Commitment (hex, 64 chars)</label>
-                    <input type="text" id="transfer-new-commitment" placeholder="New commitment hash" maxlength="64">
+                <div class="field">
+                    <label>New Commitment Hash</label>
+                    <input type="text" id="tx-new" placeholder="64 hex chars" maxlength="64">
                 </div>
-                <div class="form-group">
-                    <label>Nullifier Hash (hex, 64 chars)</label>
-                    <input type="text" id="transfer-nullifier" placeholder="Nullifier hash" maxlength="64">
+                <div class="field">
+                    <label>Nullifier Hash</label>
+                    <input type="text" id="tx-null" placeholder="64 hex chars" maxlength="64">
                 </div>
-                <button id="transfer-btn" class="submit-btn" disabled>Transfer</button>
-                <div id="transfer-status" class="status"></div>
+                <button id="tx-btn" class="action-btn" disabled>
+                    <span class="spinner"></span>Generate Proof & Transfer
+                </button>
+                <div id="tx-result" class="result"></div>
             </div>
 
-            <div id="withdraw" class="tab-content">
-                <div class="form-group">
+            <div id="withdraw" class="panel">
+                <div class="field">
                     <label>Commitment Index to Spend</label>
-                    <input type="number" id="withdraw-index" placeholder="e.g. 0" min="0">
+                    <input type="number" id="wd-index" placeholder="0" min="0">
                 </div>
-                <div class="form-group">
-                    <label>Secret (hex)</label>
-                    <input type="text" id="withdraw-secret" placeholder="Your secret" maxlength="64">
+                <div class="field">
+                    <label>Your Secret (hex)</label>
+                    <input type="text" id="wd-secret" placeholder="64 hex chars" maxlength="64">
                 </div>
-                <div class="form-group">
-                    <label>Nullifier Hash (hex, 64 chars)</label>
-                    <input type="text" id="withdraw-nullifier" placeholder="Nullifier hash" maxlength="64">
+                <div class="field">
+                    <label>Nullifier Hash</label>
+                    <input type="text" id="wd-null" placeholder="64 hex chars" maxlength="64">
                 </div>
-                <div class="form-group">
+                <div class="field">
                     <label>Amount to Withdraw</label>
-                    <input type="number" id="withdraw-amount" placeholder="e.g. 1000000000" min="1">
+                    <input type="number" id="wd-amount" placeholder="1000000000" min="1">
                 </div>
-                <button id="withdraw-btn" class="submit-btn" disabled>Withdraw</button>
-                <div id="withdraw-status" class="status"></div>
+                <button id="wd-btn" class="action-btn" disabled>
+                    <span class="spinner"></span>Generate Proof & Withdraw
+                </button>
+                <div id="wd-result" class="result"></div>
             </div>
         </div>
 
         <div class="card features">
-            <h3>Features</h3>
-            <div class="feature-item">Zero-knowledge balance proofs</div>
-            <div class="feature-item">Anonymous transfers via nullifiers</div>
-            <div class="feature-item">On-chain commitment storage</div>
-            <div class="feature-item">Client-side proof generation</div>
+            <h3>Protocol Features</h3>
+            <div class="feat">Groth16 zero-knowledge proofs (5,882 constraints)</div>
+            <div class="feat">Poseidon hashing for commitments</div>
+            <div class="feat">Nullifier-based double-spend prevention</div>
+            <div class="feat">Client-side proof generation (snarkjs)</div>
+            <div class="feat">Soroban smart contract on Stellar</div>
+            <div class="stats">
+                <div class="stat"><div class="val">5,882</div><div class="lbl">Constraints</div></div>
+                <div class="stat"><div class="val">42</div><div class="lbl">Private Inputs</div></div>
+                <div class="stat"><div class="val">3</div><div class="lbl">Public Inputs</div></div>
+                <div class="stat"><div class="val">20</div><div class="lbl">Merkle Depth</div></div>
+            </div>
         </div>
     </div>
 

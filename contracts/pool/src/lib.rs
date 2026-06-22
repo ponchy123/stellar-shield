@@ -133,3 +133,6 @@ impl PoolContract {
         env.storage().persistent().set(&DataKey::Commitments, m);
     }
 }
+
+#[cfg(test)]
+mod test;

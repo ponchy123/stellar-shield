@@ -1,17 +1,31 @@
 const CONTRACT_ID = 'CB2YBHCTTPLHQ5ZDY3Z25M5V6RP23SIG5PLPWCUIQVJYBA23TU3FKFGX';
+const VERIFIER_ID = 'CCHYX35UVXVXKDBHVFNY7GU7YKCMHGKTZU6OJJDKNQ3UL7AVOMHLYUJX';
 const NETWORK_PASSPHRASE = 'Test SDF Network ; September 2015';
 
 class StellarShield {
     constructor() {
         this.connected = false;
         this.address = null;
+        this.poseidon = null;
         this.init();
     }
 
-    init() {
+    async init() {
         this.bindEvents();
+        await this.initPoseidon();
         if (typeof window.freighter !== 'undefined') {
             this.checkConnection();
+        }
+    }
+
+    async initPoseidon() {
+        try {
+            if (typeof circomlibjs !== 'undefined') {
+                this.poseidon = await circomlibjs.buildPoseidon();
+                console.log('Poseidon initialized');
+            }
+        } catch (e) {
+            console.log('circomlibjs not available, using fallback');
         }
     }
 
@@ -88,26 +102,57 @@ class StellarShield {
         return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    async hash(data) {
-        const buf = new TextEncoder().encode(data);
-        const hash = await crypto.subtle.digest('SHA-256', buf);
+    async poseidonHash(inputs) {
+        if (this.poseidon) {
+            const F = this.poseidon.F;
+            const result = this.poseidon(inputs.map(x => F.e(BigInt('0x' + x))));
+            return F.toObject(result).toString(16).padStart(64, '0');
+        }
+        // Fallback to SHA-256
+        const data = new TextEncoder().encode(inputs.join(','));
+        const hash = await crypto.subtle.digest('SHA-256', data);
         return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    async generateProof(inputs) {
+    async generateMerkleProof(index, commitments) {
+        const treeDepth = 20;
+        const pathElements = [];
+        const pathIndices = [];
+
+        let currentIndex = index;
+        let level = commitments.length;
+
+        for (let i = 0; i < treeDepth; i++) {
+            const isRight = currentIndex % 2 === 1;
+            pathIndices.push(isRight ? 1 : 0);
+
+            if (currentIndex + 1 < level) {
+                pathElements.push(commitments[currentIndex + 1]);
+            } else {
+                pathElements.push(this.randomHex(32));
+            }
+
+            currentIndex = Math.floor(currentIndex / 2);
+            level = Math.ceil(level / 2);
+        }
+
+        return { pathElements, pathIndices };
+    }
+
+    async generateProof(input) {
         try {
             if (typeof snarkjs !== 'undefined' && snarkjs.groth16) {
                 const { proof, publicSignals } = await snarkjs.groth16.fullProve(
-                    inputs,
+                    input,
                     'balance_proof_js/balance_proof.wasm',
                     'balance_proof_final.zkey'
                 );
-                return { proof, publicSignals };
+                return { proof, publicSignals, valid: true };
             }
         } catch (e) {
-            console.log('snarkjs not available, using mock proof');
+            console.log('snarkjs proof generation failed:', e);
         }
-        return { proof: { pi_a: ['0', '0', '1'], pi_b: [['0', '0'], ['0', '0'], ['1', '0']], pi_c: ['0', '0', '1'] }, publicSignals: [] };
+        return { proof: null, publicSignals: [], valid: false };
     }
 
     async signAndSubmit(method, args) {
@@ -136,7 +181,7 @@ class StellarShield {
         this.showResult('dep-result', 'Generating ZK proof...', 'loading');
 
         try {
-            const commitment = await this.hash(amount + secret);
+            const commitment = await this.poseidonHash([amount.toString(16).padStart(64, '0'), secret]);
             this.showResult('dep-result', 'Submitting transaction...', 'loading');
 
             const result = await this.signAndSubmit('deposit', [
@@ -145,7 +190,7 @@ class StellarShield {
                 { bytes: commitment }
             ]);
 
-            this.showResult('dep-result', `✅ Deposit successful!\nCommitment: ${commitment.slice(0, 16)}...\nIndex: ${result}`, 'success');
+            this.showResult('dep-result', `✅ Deposit successful!\nCommitment: ${commitment.slice(0, 16)}...\nTx: ${result}`, 'success');
         } catch (e) {
             this.showResult('dep-result', `❌ ${e.message}`, 'error');
         }

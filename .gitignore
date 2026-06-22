@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+target/
+dist/
+
+# Build artifacts
+*.r1cs
+*.sym
+*.zkey
+*.vkey
+
+# Large files
+*.wasm
+*.ptau
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+
+# Logs
+*.log
